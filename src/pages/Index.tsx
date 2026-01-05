@@ -1,104 +1,115 @@
-import { useState } from "react";
-import { Envelope } from "@/components/Envelope";
-import { FloatingPetals } from "@/components/FloatingPetals";
-import { WeddingDetails } from "@/components/WeddingDetails";
-import { cn } from "@/lib/utils";
+import React, { useState, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import Envelope from '../components/Envelope';
+import FloatingPetals from '../components/FloatingPetals';
+import WeddingDetails from '../components/WeddingDetails';
+
+/**
+ * Main Index Page
+ * Coordinates the transition between the Envelope and the Wedding Details.
+ * Handles background music playback.
+ * * Fix: Changed imports from '@/' alias to relative paths to resolve build errors.
+ */
 
 const Index = () => {
-  const [isInvitationOpen, setIsInvitationOpen] = useState(false);
-  const [envelopeHidden, setEnvelopeHidden] = useState(false);
+  const [showEnvelope, setShowEnvelope] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const handleEnvelopeOpen = () => {
-    setIsInvitationOpen(true);
-    // Delay hiding the envelope to allow animation to complete
-    setTimeout(() => {
-      setEnvelopeHidden(true);
-    }, 1000);
+  const handleOpen = () => {
+    // Start music playback on user interaction (required by browsers)
+    if (audioRef.current) {
+      audioRef.current.play().catch(error => {
+        // This catch block handles cases where the browser might still block audio
+        console.log("Audio playback was prevented.", error);
+      });
+    }
+    
+    // Fade out envelope immediately to transition to the main invitation
+    setShowEnvelope(false);
   };
 
   return (
-    <main className="min-h-screen bg-background relative overflow-x-hidden">
-      {/* SEO */}
-      <title>Maria & James Wedding | June 15, 2025</title>
-      <meta name="description" content="You are cordially invited to celebrate the wedding of Maria and James on June 15, 2025 at The Grand Estate Gardens." />
-      
-      {/* Floating petals background */}
+    <main className="relative min-h-screen w-full bg-[#fdf8f4] overflow-hidden">
+      {/* Background Audio */}
+      <audio ref={audioRef} loop>
+        <source src="/music.mp3" type="audio/mpeg" />
+      </audio>
+
+      {/* Background Hearts (FloatingPetals updated to hearts in previous step) */}
       <FloatingPetals />
 
-      {/* Subtle background pattern */}
-      <div 
-        className="fixed inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage: `
-            radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, hsl(var(--dusty-rose) / 0.1) 0%, transparent 40%),
-            radial-gradient(circle at 40% 80%, hsl(var(--gold-light) / 0.1) 0%, transparent 40%)
-          `,
-        }}
-      />
-
-      {/* Full-screen envelope overlay */}
-      {!envelopeHidden && (
-        <div 
-          className={cn(
-            "fixed inset-0 z-50 flex items-center justify-center bg-background transition-all duration-1000",
-            isInvitationOpen && "opacity-0 pointer-events-none"
-          )}
-        >
-          <div className="w-full max-w-lg mx-auto px-4 animate-fade-in-up">
-            <Envelope onOpen={handleEnvelopeOpen} />
-          </div>
-        </div>
-      )}
-
-      {/* Main content - revealed after envelope opens */}
-      <div className={cn(
-        "relative z-10 transition-opacity duration-700",
-        isInvitationOpen ? "opacity-100" : "opacity-0"
-      )}>
-        {/* Hero section */}
-        <section className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-          <div className="text-center animate-fade-in-up">
-            <p className="font-elegant text-sm tracking-[0.4em] uppercase text-muted-foreground mb-4">
-              You are cordially invited
-            </p>
-            <h1 className="font-script text-5xl md:text-7xl text-foreground mb-4">
-              Maria & James
-            </h1>
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="w-16 h-px bg-gradient-to-r from-transparent to-gold" />
-              <span className="font-elegant text-sm tracking-widest text-muted-foreground">
-                ARE GETTING MARRIED
-              </span>
-              <div className="w-16 h-px bg-gradient-to-l from-transparent to-gold" />
-            </div>
-            
-            <p className="font-serif text-lg text-foreground mb-2">
-              Saturday, the Fifteenth of June
-            </p>
-            <p className="font-elegant text-4xl text-gold font-medium mb-8">
-              2025
-            </p>
-          </div>
-
-          {/* Scroll indicator */}
-          <div 
-            className="mt-12 animate-fade-in-up flex flex-col items-center"
-            style={{ animationDelay: "0.5s" }}
+      <AnimatePresence mode="wait">
+        {showEnvelope ? (
+          <motion.div
+            key="envelope-layer"
+            initial={{ opacity: 1 }}
+            exit={{ 
+              opacity: 0, 
+              scale: 1.1, 
+              filter: 'blur(10px)',
+              transition: { duration: 1, ease: "easeInOut" } 
+            }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-[#fdf8f4]"
           >
-            <p className="font-elegant text-sm text-muted-foreground mb-2">
-              Scroll for details
-            </p>
-            <div className="w-px h-8 bg-gradient-to-b from-gold to-transparent animate-pulse" />
-          </div>
-        </section>
+            <Envelope onOpen={handleOpen} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="content-layer"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.5, delay: 0.2 }}
+            className="relative z-10 w-full min-h-screen"
+          >
+            <WeddingDetails />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Wedding details section */}
-        <section className="py-12">
-          <WeddingDetails isVisible={isInvitationOpen} />
-        </section>
-      </div>
+      {/* Music Control Overlay */}
+      {!showEnvelope && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          whileHover={{ opacity: 1 }}
+          onClick={() => {
+            if (audioRef.current) {
+              if (audioRef.current.paused) {
+                audioRef.current.play();
+              } else {
+                audioRef.current.pause();
+              }
+            }
+          }}
+          className="fixed bottom-6 right-6 z-50 p-3 rounded-full bg-white/80 backdrop-blur-md border border-stone-200 text-stone-600 shadow-sm"
+        >
+          <div className="flex items-center gap-2 px-1">
+            <div className="flex gap-1 items-end h-3">
+              <motion.div 
+                animate={{ height: ["20%", "100%", "40%"] }} 
+                transition={{ repeat: Infinity, duration: 0.6 }} 
+                className="w-1 bg-rose-300" 
+              />
+              <motion.div 
+                animate={{ height: ["40%", "20%", "80%"] }} 
+                transition={{ repeat: Infinity, duration: 0.8 }} 
+                className="w-1 bg-rose-400" 
+              />
+              <motion.div 
+                animate={{ height: ["60%", "100%", "20%"] }} 
+                transition={{ repeat: Infinity, duration: 0.5 }} 
+                className="w-1 bg-rose-300" 
+              />
+            </div>
+            <span className="text-[10px] font-sans uppercase tracking-[0.2em]">Music</span>
+          </div>
+        </motion.button>
+      )}
     </main>
+  );
+};
+
+export default Index;
   );
 };
 
