@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LucideHeart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 /**
  * Enhanced Realistic Envelope Component
- * Features:
- * 1. SVG Paper Texture Filter for realistic grain.
- * 2. Multi-layered fold shadows for depth.
- * 3. Responsive large-scale sizing.
- * 4. Interactive opening animation.
+ * Fixes:
+ * 1. Corrected 'LucideHeart' import to 'Heart' from lucide-react.
+ * 2. Renamed component to 'Envelope' for proper integration.
  */
 
 const PaperTextureFilter = () => (
@@ -50,7 +48,7 @@ const WaxSeal = ({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) 
       
       {/* Wax inner detail */}
       <div className="absolute inset-2 border-2 border-red-900/30 rounded-full flex items-center justify-center bg-red-700 shadow-inner">
-        <LucideHeart className="text-red-200 fill-red-200/20 w-8 h-8" />
+        <Heart className="text-red-200 fill-red-200/20 w-8 h-8" />
       </div>
       
       {/* Wax highlight */}
@@ -59,7 +57,7 @@ const WaxSeal = ({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) 
   </motion.div>
 );
 
-export default function App() {
+export default function Envelope() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
